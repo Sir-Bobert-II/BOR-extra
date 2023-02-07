@@ -1,5 +1,6 @@
 use serde_derive::{Deserialize, Serialize};
 
+// https://github.com/lukePeavey/quotable#get-random-quote
 #[derive(Error,Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum QuoteError
 {
