@@ -108,7 +108,7 @@ impl RandomQuote {
 
 impl std::fmt::Display for RandomQuote {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "*{}*\n\t— {}", self.content.trim(), self.author)
+        write!(f, "*{}*\n\t—{}", self.content.trim(), self.author)
     }
 }
 
@@ -129,7 +129,7 @@ mod tests {
             date_modified: "NONE".to_string(),
         };
 
-        assert_eq!(quote.to_string(), "*This is a quote*\n\t— Rust Test");
+        assert_eq!(quote.to_string(), "*This is a quote*\n\t—Rust Test");
     }
 
     #[test]
@@ -145,7 +145,7 @@ mod tests {
             date_modified: "NONE".to_string(),
         });
 
-        assert_eq!(quote.to_string(), "*This is a quote*\n\t— Rust Test");
+        assert_eq!(quote.to_string(), "*This is a quote*\n\t—Rust Test");
     }
 
     #[test]
@@ -155,7 +155,7 @@ mod tests {
 
         assert_eq!(
             quote.to_string(),
-            format!("*{}*\n\t— {}", quote.content, quote.author)
+            format!("*{}*\n\t—{}", quote.content, quote.author)
         )
     }
 }
