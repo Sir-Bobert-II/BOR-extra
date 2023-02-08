@@ -1,2 +1,7 @@
+[package]
+name = "help"
+version = "0.1.0"
+edition = "2021"
+authors = ["Decator <decator.c@proton.me>"]
+
 [dependencies]
-lazy_static = "1.4"

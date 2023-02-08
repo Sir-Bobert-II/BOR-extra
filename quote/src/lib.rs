@@ -1,14 +1,24 @@
-use serenity::{builder::CreateApplicationCommand, model::prelude::command::CommandOptionType};
+use lazy_static::lazy_static;
 use serde_derive::{Deserialize, Serialize};
+use serenity::{builder::CreateApplicationCommand, model::prelude::command::CommandOptionType};
 use thiserror::Error;
 
-pub const HELP: &str =
-r#"quote: Request quotes from the internet.
-Subcommands
-    random: Request a random quote."#;
+lazy_static! {
+    pub static ref HELP: String = {
+        help::HelpMessage::new()
+            .name("quote")
+            .description("Request quotes from the internet")
+            .add_subcommand(
+                help::HelpMessage::new()
+                    .name("random")
+                    .description("Request a random quote")
+                    .clone(),
+            )
+            .to_string()
+    };
+}
 
-pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand
-{
+pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     command
         .name("quote")
         .dm_permission(true)
@@ -21,38 +31,39 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
         })
 }
 
-#[derive(Error,Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum QuoteError
-{
+#[derive(Error, Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum QuoteError {
     #[error("JSONParseError: couldn't parse json: {message}")]
-    JsonParse {message: String},
+    JsonParse { message: String },
 
     #[error("RequestError: couldn't request quote: {message}")]
-    Request {message: String},
+    Request { message: String },
 
     #[default]
     #[error("Error: An unknown error occurred.")]
     GeneralError,
 }
 
-pub enum Quote
-{
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum Quote {
     Random(RandomQuote),
 }
 
-impl Quote
-{
-    pub fn get_random() -> Result<Self, QuoteError>
-    {
+impl Quote {
+    pub fn get_random() -> Result<Self, QuoteError> {
         Ok(Self::Random(RandomQuote::fetch()?))
     }
 }
 
-impl std::fmt::Display for Quote
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
-    {
-        write!(f, "{}", match self {Self::Random(quote) => quote})
+impl std::fmt::Display for Quote {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Random(quote) => quote,
+            }
+        )
     }
 }
 
@@ -70,19 +81,15 @@ pub struct RandomQuote {
     pub date_modified: String,
 }
 
-impl RandomQuote
-{
-    pub fn fetch() -> Result<Self, QuoteError>
-    {
+impl RandomQuote {
+    pub fn fetch() -> Result<Self, QuoteError> {
         // Construct request URL
         let url = "https://api.quotable.io/random".to_string();
 
         // Get the response
-        if let Ok(resp) = match reqwest::blocking::get(url)
-        {
+        if let Ok(resp) = match reqwest::blocking::get(url) {
             Ok(x) => x,
-            Err(e) =>
-            {
+            Err(e) => {
                 return Err(QuoteError::Request {
                     message: format!("{e}"),
                 })
@@ -91,9 +98,7 @@ impl RandomQuote
         .json::<Self>()
         {
             Ok(resp)
-        }
-        else
-        {
+        } else {
             Err(QuoteError::JsonParse {
                 message: "Invalid JSON content".to_string(),
             })
@@ -101,22 +106,18 @@ impl RandomQuote
     }
 }
 
-impl std::fmt::Display for RandomQuote
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
-    {
+impl std::fmt::Display for RandomQuote {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "*{}*\n\t— {}", self.content.trim(), self.author)
     }
 }
 
 #[cfg(test)]
-mod tests
-{
+mod tests {
     use super::*;
-    
+
     #[test]
-    fn test_random_quote_display()
-    {
+    fn test_random_quote_display() {
         let quote = RandomQuote {
             id: "NONE".to_string(),
             content: "This is a quote".to_string(),
@@ -127,13 +128,12 @@ mod tests
             date_added: "NONE".to_string(),
             date_modified: "NONE".to_string(),
         };
-        
+
         assert_eq!(quote.to_string(), "*This is a quote*\n\t— Rust Test");
     }
-    
+
     #[test]
-    fn test_quote_display()
-    {
+    fn test_quote_display() {
         let quote = Quote::Random(RandomQuote {
             id: "NONE".to_string(),
             content: "This is a quote".to_string(),
@@ -144,7 +144,18 @@ mod tests
             date_added: "NONE".to_string(),
             date_modified: "NONE".to_string(),
         });
-        
+
         assert_eq!(quote.to_string(), "*This is a quote*\n\t— Rust Test");
+    }
+
+    #[test]
+    fn fetch_random_quote() {
+        let quote = Quote::get_random().unwrap();
+        let Quote::Random(quote) = quote;
+
+        assert_eq!(
+            quote.to_string(),
+            format!("*{}*\n\t— {}", quote.content, quote.author)
+        )
     }
 }
